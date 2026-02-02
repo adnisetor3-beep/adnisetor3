@@ -1,6 +1,6 @@
 import { EventRequest, User, UserRole } from '../types';
 
-// Importar Firebase condicionalmente
+// Importar Firebase funções dinamicamente
 let database: any = null;
 let ref: any = null;
 let get: any = null;
@@ -8,18 +8,24 @@ let set: any = null;
 let update: any = null;
 let onValue: any = null;
 
-// Tenta importar Firebase se disponível
-try {
-  const firebaseModule = require('./firebase');
-  database = firebaseModule.database;
-  ref = firebaseModule.ref;
-  get = firebaseModule.get;
-  set = firebaseModule.set;
-  update = firebaseModule.update;
-  onValue = firebaseModule.onValue;
-} catch (error) {
-  console.warn('Firebase não está disponível');
-}
+// Tenta carregar Firebase
+const loadFirebase = async () => {
+  try {
+    const fb = await import('./firebase');
+    database = fb.database;
+    ref = fb.ref;
+    get = fb.get;
+    set = fb.set;
+    update = fb.update;
+    onValue = fb.onValue;
+    console.log('✅ Firebase carregado com sucesso');
+  } catch (error) {
+    console.warn('⚠️ Erro ao carregar Firebase:', error);
+  }
+};
+
+// Carregar Firebase imediatamente
+loadFirebase();
 
 const USE_FIREBASE = true; // Habilitar Firebase em produção
 const API_BASE = 'http://localhost:3001/api';
@@ -105,27 +111,35 @@ export const fetchInitialData = (): Promise<{ users: User[]; events: EventReques
   return new Promise(async (resolve) => {
     try {
       // Se Firebase está habilitado, tenta buscar de lá primeiro
-      if (USE_FIREBASE && get && ref) {
-        try {
-          console.log('📡 Buscando dados do Firebase...');
-          const usersRef = ref(database, 'users');
-          const eventsRef = ref(database, 'events');
-          
-          const [usersSnapshot, eventsSnapshot] = await Promise.all([
-            get(usersRef),
-            get(eventsRef)
-          ]);
-          
-          const users = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) as User[] : [];
-          const events = eventsSnapshot.exists() ? Object.values(eventsSnapshot.val()) as EventRequest[] : [];
-          
-          console.log('✅ Dados carregados do Firebase:', { users: users.length, events: events.length });
-          saveLocalUsers(users);
-          saveLocalEvents(events);
-          resolve({ users, events });
-          return;
-        } catch (firebaseError) {
-          console.warn('⚠️ Erro ao buscar do Firebase, tentando servidor...', firebaseError);
+      if (USE_FIREBASE) {
+        console.log('🔍 Verificando Firebase:', { database: !!database, ref: !!ref, get: !!get });
+        
+        if (database && get && ref) {
+          try {
+            console.log('📡 Buscando dados do Firebase...');
+            const usersRef = ref(database, 'users');
+            const eventsRef = ref(database, 'events');
+            
+            const [usersSnapshot, eventsSnapshot] = await Promise.all([
+              get(usersRef),
+              get(eventsRef)
+            ]);
+            
+            const users = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) as User[] : [];
+            const events = eventsSnapshot.exists() ? Object.values(eventsSnapshot.val()) as EventRequest[] : [];
+            
+            console.log('✅ Dados carregados do Firebase:', { users: users.length, events: events.length });
+            if (users.length > 0 || events.length > 0) {
+              saveLocalUsers(users);
+              saveLocalEvents(events);
+              resolve({ users, events });
+              return;
+            }
+          } catch (firebaseError) {
+            console.error('❌ Erro ao buscar do Firebase:', firebaseError);
+          }
+        } else {
+          console.warn('⚠️ Firebase não está inicializado corretamente');
         }
       }
 
