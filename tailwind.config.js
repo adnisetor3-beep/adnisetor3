@@ -1,0 +1,85 @@
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Poppins', 'sans-serif'],
+        body: ['Plus Jakarta Sans', 'sans-serif'],
+      },
+      colors: {
+        'adni-marrom': '#1f2937',
+        'adni-marrom-light': '#4b5563',
+        'adni-marrom-lighter': '#6b7280',
+        'adni-laranja': '#f97316',
+        'adni-laranja-light': '#fb923c',
+        'adni-laranja-dark': '#ea580c',
+        'adni-ouro': '#f59e0b',
+        'adni-ouro-light': '#fbbf24',
+        'adni-bronze': '#b45309',
+        'adni-ocre': '#ca8a04',
+        
+        /* Paleta de cores melhorada */
+        'primary': {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+        },
+        'accent': {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        'success': {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+        },
+        'warning': {
+          50: '#fefce8',
+          100: '#fef08a',
+          500: '#f59e0b',
+          600: '#d97706',
+        },
+        'error': {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          500: '#ef4444',
+          600: '#dc2626',
+        },
+      },
+      backgroundImage: {
+        'adni-gradient': 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
+        'gradient-soft': 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)',
+      },
+      boxShadow: {
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
+        'medium': '0 4px 12px rgba(0, 0, 0, 0.1)',
+        'lg-custom': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        'xl-custom': '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+        'glow': '0 0 30px rgba(249, 115, 22, 0.15)',
+        'glow-sm': '0 0 15px rgba(249, 115, 22, 0.1)',
+      },
+    },
+  },
+  plugins: [],
+};

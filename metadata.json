@@ -1,0 +1,5 @@
+{
+  "name": "ADNI ITAIPU Agenda",
+  "description": "Agenda Online para Gerenciamento de Eventos com controle de permissões e fluxo de aprovação.",
+  "requestFramePermissions": []
+}

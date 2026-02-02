@@ -1,0 +1,50 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Firebase Configuration - PRODUCTION SENSITIVE
+services/firebase.ts
+services/firebase.config.ts
+.env.firebase
+FIREBASE_CONFIG.json
+
+# Database Files - LOCAL DATA (NEVER COMMIT)
+data/
+data/*.json
+db.json
+*.db
+database.json
+
+# Environment Variables - PRODUCTION CREDENTIALS
+.env
+.env.local
+.env.production
+.env.production.local
+.env.*.local
+.env.firebase.local
+
+# Cache and Temporary Files
+*.cache
+.cache/
+temp/
+tmp/
+
+# IDE and Editor Files
+.idea/
+.vscode/settings.json
+.DS_Store
+*.swp
+*.swo
+
+# OS Files
+Thumbs.db# Build and dependencies
