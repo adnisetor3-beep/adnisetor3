@@ -12,11 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Firebase Configuration - PRODUCTION SENSITIVE
-services/firebase.config.ts
-.env.firebase
-FIREBASE_CONFIG.json
-
 # Database Files - LOCAL DATA (NEVER COMMIT)
 data/
 data/*.json
@@ -25,12 +20,10 @@ db.json
 database.json
 
 # Environment Variables - PRODUCTION CREDENTIALS
-.env
 .env.local
 .env.production
 .env.production.local
 .env.*.local
-.env.firebase.local
 
 # Cache and Temporary Files
 *.cache
