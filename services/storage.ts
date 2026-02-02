@@ -1,14 +1,15 @@
 import { EventRequest, User, UserRole } from '../types';
+import { database, ref, get, set, update, onValue } from './firebase';
 
 // Apenas para desenvolvimento - Firebase é apenas para produção
-let database: any = null;
-let ref: any = null;
-let get: any = null;
-let set: any = null;
-let update: any = null;
-let onValue: any = null;
+let database_local: any = database;
+let ref_local: any = ref;
+let get_local: any = get;
+let set_local: any = set;
+let update_local: any = update;
+let onValue_local: any = onValue;
 
-const USE_FIREBASE = false; // Desabilitar Firebase em desenvolvimento
+const USE_FIREBASE = true; // Habilitar Firebase em produção
 const API_BASE = 'http://localhost:3001/api';
 
 export type Unsubscribe = () => void;
@@ -85,13 +86,38 @@ export const saveLocalEvents = (events: EventRequest[]) => {
 // --- FUNÇÕES DO FIREBASE (SÍNCRONAS EM TEMPO REAL) ---
 
 /**
- * Carrega dados iniciais do servidor Express
- * Fallback para dados locais se o servidor não estiver disponível
+ * Carrega dados iniciais do Firebase ou do servidor Express
+ * Fallback para dados locais se ambos não estiverem disponíveis
  */
 export const fetchInitialData = (): Promise<{ users: User[]; events: EventRequest[] }> => {
   return new Promise(async (resolve) => {
     try {
-      // Usa um timeout curto para não travar
+      // Se Firebase está habilitado, tenta buscar de lá primeiro
+      if (USE_FIREBASE && get_local && ref_local) {
+        try {
+          console.log('📡 Buscando dados do Firebase...');
+          const usersRef = ref_local(database_local, 'users');
+          const eventsRef = ref_local(database_local, 'events');
+          
+          const [usersSnapshot, eventsSnapshot] = await Promise.all([
+            get_local(usersRef),
+            get_local(eventsRef)
+          ]);
+          
+          const users = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) as User[] : [];
+          const events = eventsSnapshot.exists() ? Object.values(eventsSnapshot.val()) as EventRequest[] : [];
+          
+          console.log('✅ Dados carregados do Firebase:', { users: users.length, events: events.length });
+          saveLocalUsers(users);
+          saveLocalEvents(events);
+          resolve({ users, events });
+          return;
+        } catch (firebaseError) {
+          console.warn('⚠️ Erro ao buscar do Firebase, tentando servidor...', firebaseError);
+        }
+      }
+
+      // Tenta buscar do servidor Express
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -155,60 +181,116 @@ export const subscribeToEvents = (callback: (events: EventRequest[]) => void): U
 };
 
 /**
- * Persiste usuários no servidor Express
+ * Persiste usuários no Firebase ou no servidor Express
  */
 export const persistUsers = (users: User[]): Promise<boolean> => {
   // Sempre salva localmente primeiro
   saveLocalUsers(users);
 
   return new Promise((resolve) => {
-    // Tenta salvar no servidor
-    fetch(`${API_BASE}/users`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(users),
-    })
-      .then(response => {
-        if (response.ok) {
-          console.log('✅ Usuários salvos no servidor');
-        } else {
-          console.warn('⚠️ Erro ao salvar usuários no servidor');
-        }
-        resolve(true);
+    // Se Firebase está habilitado, salva lá
+    if (USE_FIREBASE && set_local && ref_local) {
+      try {
+        const usersRef = ref_local(database_local, 'users');
+        const usersObj = users.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, User>);
+        
+        set_local(usersRef, usersObj)
+          .then(() => {
+            console.log('✅ Usuários salvos no Firebase');
+            resolve(true);
+          })
+          .catch((err) => {
+            console.warn('⚠️ Erro ao salvar usuários no Firebase, tentando servidor...', err);
+            saveToServer();
+          });
+        return;
+      } catch (error) {
+        console.warn('⚠️ Erro ao preparar Firebase, tentando servidor...', error);
+      }
+    }
+
+    // Fallback para servidor Express
+    const saveToServer = () => {
+      fetch(`${API_BASE}/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(users),
       })
-      .catch((err) => {
-        console.warn('⚠️ Servidor não disponível, dados salvos localmente');
-        resolve(true);
-      });
+        .then(response => {
+          if (response.ok) {
+            console.log('✅ Usuários salvos no servidor');
+          } else {
+            console.warn('⚠️ Erro ao salvar usuários no servidor');
+          }
+          resolve(true);
+        })
+        .catch((err) => {
+          console.warn('⚠️ Servidor não disponível, dados salvos localmente');
+          resolve(true);
+        });
+    };
+
+    saveToServer();
   });
 };
 
 /**
- * Persiste eventos no servidor Express
+ * Persiste eventos no Firebase ou no servidor Express
  */
 export const persistEvents = (events: EventRequest[]): Promise<boolean> => {
   // Sempre salva localmente primeiro
   saveLocalEvents(events);
 
   return new Promise((resolve) => {
-    // Tenta salvar no servidor
-    fetch(`${API_BASE}/events`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(events),
-    })
-      .then(response => {
-        if (response.ok) {
-          console.log('✅ Eventos salvos no servidor');
-        } else {
-          console.warn('⚠️ Erro ao salvar eventos no servidor');
-        }
-        resolve(true);
+    // Se Firebase está habilitado, salva lá
+    if (USE_FIREBASE && set_local && ref_local) {
+      try {
+        const eventsRef = ref_local(database_local, 'events');
+        const eventsObj = events.reduce((acc, event) => {
+          acc[event.id] = event;
+          return acc;
+        }, {} as Record<string, EventRequest>);
+        
+        set_local(eventsRef, eventsObj)
+          .then(() => {
+            console.log('✅ Eventos salvos no Firebase');
+            resolve(true);
+          })
+          .catch((err) => {
+            console.warn('⚠️ Erro ao salvar eventos no Firebase, tentando servidor...', err);
+            saveToServer();
+          });
+        return;
+      } catch (error) {
+        console.warn('⚠️ Erro ao preparar Firebase, tentando servidor...', error);
+      }
+    }
+
+    // Fallback para servidor Express
+    const saveToServer = () => {
+      fetch(`${API_BASE}/events`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(events),
       })
-      .catch((err) => {
-        console.warn('⚠️ Servidor não disponível, dados salvos localmente');
-        resolve(true);
-      });
+        .then(response => {
+          if (response.ok) {
+            console.log('✅ Eventos salvos no servidor');
+          } else {
+            console.warn('⚠️ Erro ao salvar eventos no servidor');
+          }
+          resolve(true);
+        })
+        .catch((err) => {
+          console.warn('⚠️ Servidor não disponível, dados salvos localmente');
+          resolve(true);
+        });
+    };
+
+    saveToServer();
   });
 };
 
