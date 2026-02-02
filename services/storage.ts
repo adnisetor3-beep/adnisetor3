@@ -24,8 +24,12 @@ const loadFirebase = async () => {
   }
 };
 
-// Carregar Firebase imediatamente
-loadFirebase();
+// Trata aguardar Firebase estar pronto
+let firebaseReady = false;
+const firebaseReadyPromise = loadFirebase().then(() => {
+  firebaseReady = true;
+  console.log('✅ Firebase pronto para usar');
+});
 
 const USE_FIREBASE = true; // Habilitar Firebase em produção
 const API_BASE = 'http://localhost:3001/api';
@@ -110,6 +114,9 @@ export const saveLocalEvents = (events: EventRequest[]) => {
 export const fetchInitialData = (): Promise<{ users: User[]; events: EventRequest[] }> => {
   return new Promise(async (resolve) => {
     try {
+      // Aguardar Firebase estar pronto
+      await firebaseReadyPromise;
+      
       // Se Firebase está habilitado, tenta buscar de lá primeiro
       if (USE_FIREBASE) {
         console.log('🔍 Verificando Firebase:', { database: !!database, ref: !!ref, get: !!get });
