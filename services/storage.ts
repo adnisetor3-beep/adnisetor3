@@ -1,13 +1,25 @@
 import { EventRequest, User, UserRole } from '../types';
-import { database, ref, get, set, update, onValue } from './firebase';
 
-// Apenas para desenvolvimento - Firebase é apenas para produção
-let database_local: any = database;
-let ref_local: any = ref;
-let get_local: any = get;
-let set_local: any = set;
-let update_local: any = update;
-let onValue_local: any = onValue;
+// Importar Firebase condicionalmente
+let database: any = null;
+let ref: any = null;
+let get: any = null;
+let set: any = null;
+let update: any = null;
+let onValue: any = null;
+
+// Tenta importar Firebase se disponível
+try {
+  const firebaseModule = require('./firebase');
+  database = firebaseModule.database;
+  ref = firebaseModule.ref;
+  get = firebaseModule.get;
+  set = firebaseModule.set;
+  update = firebaseModule.update;
+  onValue = firebaseModule.onValue;
+} catch (error) {
+  console.warn('Firebase não está disponível');
+}
 
 const USE_FIREBASE = true; // Habilitar Firebase em produção
 const API_BASE = 'http://localhost:3001/api';
@@ -93,15 +105,15 @@ export const fetchInitialData = (): Promise<{ users: User[]; events: EventReques
   return new Promise(async (resolve) => {
     try {
       // Se Firebase está habilitado, tenta buscar de lá primeiro
-      if (USE_FIREBASE && get_local && ref_local) {
+      if (USE_FIREBASE && get && ref) {
         try {
           console.log('📡 Buscando dados do Firebase...');
-          const usersRef = ref_local(database_local, 'users');
-          const eventsRef = ref_local(database_local, 'events');
+          const usersRef = ref(database, 'users');
+          const eventsRef = ref(database, 'events');
           
           const [usersSnapshot, eventsSnapshot] = await Promise.all([
-            get_local(usersRef),
-            get_local(eventsRef)
+            get(usersRef),
+            get(eventsRef)
           ]);
           
           const users = usersSnapshot.exists() ? Object.values(usersSnapshot.val()) as User[] : [];
@@ -189,15 +201,15 @@ export const persistUsers = (users: User[]): Promise<boolean> => {
 
   return new Promise((resolve) => {
     // Se Firebase está habilitado, salva lá
-    if (USE_FIREBASE && set_local && ref_local) {
+    if (USE_FIREBASE && set && ref) {
       try {
-        const usersRef = ref_local(database_local, 'users');
+        const usersRef = ref(database, 'users');
         const usersObj = users.reduce((acc, user) => {
           acc[user.id] = user;
           return acc;
         }, {} as Record<string, User>);
         
-        set_local(usersRef, usersObj)
+        set(usersRef, usersObj)
           .then(() => {
             console.log('✅ Usuários salvos no Firebase');
             resolve(true);
@@ -246,15 +258,15 @@ export const persistEvents = (events: EventRequest[]): Promise<boolean> => {
 
   return new Promise((resolve) => {
     // Se Firebase está habilitado, salva lá
-    if (USE_FIREBASE && set_local && ref_local) {
+    if (USE_FIREBASE && set && ref) {
       try {
-        const eventsRef = ref_local(database_local, 'events');
+        const eventsRef = ref(database, 'events');
         const eventsObj = events.reduce((acc, event) => {
           acc[event.id] = event;
           return acc;
         }, {} as Record<string, EventRequest>);
         
-        set_local(eventsRef, eventsObj)
+        set(eventsRef, eventsObj)
           .then(() => {
             console.log('✅ Eventos salvos no Firebase');
             resolve(true);
