@@ -13,7 +13,6 @@ dist-ssr
 *.local
 
 # Firebase Configuration - PRODUCTION SENSITIVE
-services/firebase.ts
 services/firebase.config.ts
 .env.firebase
 FIREBASE_CONFIG.json
