@@ -68,56 +68,34 @@ export const timeToMinutes = (time: string): number => {
 
 /**
  * Verifica se há conflito de horário entre dois eventos
+ * DESATIVADO: Permite criar múltiplos eventos no mesmo dia sem limitação de horário
  * @param existingTime Horário do evento existente (HH:MM)
  * @param newTime Horário do novo evento (HH:MM)
  * @param minGapHours Espaço mínimo em horas entre eventos (default: 2)
- * @returns true se há conflito, false caso contrário
+ * @returns Sempre false (sem validação de conflito)
  */
 export const hasTimeConflict = (
   existingTime: string,
   newTime: string,
   minGapHours: number = 2
 ): boolean => {
-  const existingMinutes = timeToMinutes(existingTime);
-  const newMinutes = timeToMinutes(newTime);
-  const minGapMinutes = minGapHours * 60;
-
-  // Verifica se o novo evento começa dentro do gap de 2 horas ANTES do evento existente
-  // ou dentro do gap de 2 horas DEPOIS do evento existente
-  const diff = Math.abs(existingMinutes - newMinutes);
-  
-  return diff < minGapMinutes;
+  // Validação desativada - permite criar eventos sem restrição de horário
+  return false;
 };
 
 /**
  * Valida se pode criar um novo evento em determinada data/hora
+ * DESATIVADO: Permite criar múltiplos eventos no mesmo dia sem restrição
  * @param newDate Data do novo evento (YYYY-MM-DD)
  * @param newTime Hora do novo evento (HH:MM)
  * @param allEvents Lista de todos os eventos existentes
- * @returns Objeto com { valid: boolean, conflictingEvent?: EventRequest, message?: string }
+ * @returns Sempre retorna { valid: true }
  */
 export const validateEventConflict = (
   newDate: string,
   newTime: string,
   allEvents: EventRequest[]
 ): { valid: boolean; conflictingEvent?: EventRequest; message?: string } => {
-  // Procura eventos no mesmo dia
-  const eventsOnSameDay = allEvents.filter(event => event.date === newDate);
-
-  if (eventsOnSameDay.length === 0) {
-    return { valid: true };
-  }
-
-  // Verifica conflito de horário
-  for (const event of eventsOnSameDay) {
-    if (hasTimeConflict(event.time, newTime)) {
-      return {
-        valid: false,
-        conflictingEvent: event,
-        message: `Já existe um evento cadastrado para ${event.time} (${event.title}). Precisa ter pelo menos 2 horas de espaço entre eventos.`
-      };
-    }
-  }
-
+  // Validação de conflito desativada - todos os eventos são permitidos
   return { valid: true };
 };
